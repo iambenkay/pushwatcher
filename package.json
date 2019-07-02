@@ -20,8 +20,10 @@
   "homepage": "https://github.com/iambenkay/git-twit#readme",
   "dependencies": {
     "body-parser": "^1.19.0",
-    "dotenv": "^8.0.0",
     "express": "^4.17.1",
     "twitter": "^1.7.1"
+  },
+  "engines": {
+    "node": "8.10.0"
   }
 }

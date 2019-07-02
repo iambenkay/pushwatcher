@@ -1,13 +1,12 @@
 const express = require('express'), bodyParser = require('body-parser'), Twitter = require('twitter');
-const config = require('./config');
 const port = process.env.PORT || 3000;
 const app = express();
 
 var client = new Twitter({
-    consumer_key: config.CONSUMER_KEY,
-    consumer_secret: config.CONSUMER_SECRET,
-    access_token_key: config.ACCESS_TOKEN_KEY,
-    access_token_secret: config.ACCESS_TOKEN_SECRET,
+    consumer_key: process.env.CONSUMER_KEY,
+    consumer_secret: process.env.CONSUMER_SECRET,
+    access_token_key: process.env.ACCESS_TOKEN_KEY,
+    access_token_secret: process.env.ACCESS_TOKEN_SECRET,
 })
 
 app.use(bodyParser.json());
