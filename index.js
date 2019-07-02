@@ -13,10 +13,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.post("/git-twit", (req, res) => {
-    console.log("I am working")
     let push = req.body;
 
-    let toTweet = `Git ${req.headers['x-github-event']} notification\ngit >> ${push.head_commit.message}\n\nLast commit by: ${push.head_commit.author.name} ${push.head_commit.author.email}.\n\nThere are a total of ${push.size} commits in this push.`;
+    let toTweet = `***GIT ${req.headers['x-github-event'].toUpperCase()} NOTIFICATION***\n\ngit >> ${push.head_commit.message}\n\n\t\tLast commit by: ${push.head_commit.author.name}\n\t\t${push.head_commit.author.email}.\n\nThere are a total of ${push.commits.length()} commits in this push.\n\n(This stat was published by pushwatcher)`;
 
     client.post('statuses/update', { status: toTweet })
         .then(tweet => {
