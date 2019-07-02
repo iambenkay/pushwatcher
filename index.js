@@ -7,7 +7,7 @@ const createSignatures = body => {
     for (let secret of process.env.GITHUB_HOOK_SECRETS.split(',')) {
         const hmac = crypto.createHmac('sha1', secret);
         const signature = hmac.update(JSON.stringify(body)).digest('hex');
-        createdSignatures.push(signature);
+        createdSignatures.push(`sha1=${signature}`);
     }
     return createdSignatures;
 }
