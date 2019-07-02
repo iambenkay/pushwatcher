@@ -21,7 +21,7 @@ app.post("/git-twit", (req, res) => {
         hmac.update(Buffer.from(JSON.stringify(req.body)));
         hmacs.push(hmac.digest('hex'));
     }
-    if(req.headers['x-github-signature'] in hmacs) {
+    if(req.headers['x-hub-signature'] in hmacs) {
         let push = req.body;
     
         let toTweet = `***GIT ${req.headers['x-github-event'].toUpperCase()} NOTIFICATION***\n\ngit >> ${push.head_commit.message}\nLink: ${push.url}\n\nLast commit by: ${push.head_commit.author.name}\n${push.head_commit.author.email}.\n\nThere are a total of ${push.commits.length} commits in this push.\n\n(This stat was published by pushwatcher)`;
@@ -34,7 +34,8 @@ app.post("/git-twit", (req, res) => {
                 throw error;
             });
     } else {
-        res.send("The github repo you're trying to use is not registered with this instance f pushwatcher is not trusted.");
+        console.log("The github repo you're trying to use is not registered with this instance of pushwatcher and is unauthorized.");
+        res.send("The github repo you're trying to use is not registered with this instance of pushwatcher and is unauthorized.");
     }
 });
 
