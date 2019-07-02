@@ -18,14 +18,24 @@ app.post("/git-twit", (req, res) => {
     
     for(let s of secrets){
         let hmac = crypto.createHmac('sha1', s);
-        hmac.update(Buffer.from(JSON.stringify(req.body)));
-        console.log(`sha1=${hmac.digest('hex')}`);
+        hmac.update(JSON.stringify(req.body));
         hmacs.push(`sha1=${hmac.digest('hex')}`);
     }
     if(req.headers['x-hub-signature'] in hmacs) {
         let push = req.body;
     
-        let toTweet = `***GIT ${req.headers['x-github-event'].toUpperCase()} NOTIFICATION***\n\ngit >> ${push.head_commit.message}\nLink: ${push.url}\n\nLast commit by: ${push.head_commit.author.name}\n${push.head_commit.author.email}.\n\nThere are a total of ${push.commits.length} commits in this push.\n\n(This stat was published by pushwatcher)`;
+        let toTweet = 
+        `***GIT ${req.headers['x-github-event'].toUpperCase()} NOTIFICATION***
+        
+        git >> ${push.head_commit.message}
+        Link: ${push.url}
+        
+        Last commit by: ${push.head_commit.author.name}
+        ${push.head_commit.author.email}.
+        
+        There are a total of ${push.commits.length} commits in this push.
+        
+        (This stat was published by pushwatcher)`;
     
         client.post('statuses/update', { status: toTweet })
             .then(tweet => {
