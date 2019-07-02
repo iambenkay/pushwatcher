@@ -15,7 +15,8 @@ const createSignatures = body => {
 const validateSignature = (signature, createdSignature) => {
     const source = Buffer.from(signature);
     const verifier = Buffer.from(createdSignature);
-
+    console.log(source);
+    console.log(verifier);
     return crypto.timingSafeEqual(source, verifier);
 }
 
