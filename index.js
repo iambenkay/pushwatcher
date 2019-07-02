@@ -35,8 +35,6 @@ const verifyGithub = (req, res, next) => {
     if (!valid) {
         return res.status(401).send("Mismatched Signatures");
     }
-    req.payload = body;
-    req.event = headers['x-github-event'];
     next();
 }
 
@@ -51,10 +49,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.post("/git-twit", verifyGithub, (req, res) => {
-    let push = req.payload;
 
     let toTweet =
-        `***GIT ${req.event.toUpperCase()} NOTIFICATION***
+        `***GIT ${req.headers[''].toUpperCase()} NOTIFICATION***
         
         git >> ${push.head_commit.message}
         Link: ${push.url}
