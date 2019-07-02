@@ -2,6 +2,42 @@ const express = require('express'), bodyParser = require('body-parser'), Twitter
 const port = process.env.PORT || 3000;
 const app = express();
 
+const createSignatures = body => {
+    createdSignatures = [];
+    for (let secret of process.env.GITHUB_HOOK_SECRETS.split(',')) {
+        const hmac = crypto.createHmac('sha1', secret);
+        const signature = hmac.update(JSON.stringify(body)).digest('hex');
+        createdSignatures.push(signature);
+    }
+    return createdSignatures;
+}
+
+const validateSignature = (signature, createdSignature) => {
+    const source = Buffer.from(signature);
+    const verifier = Buffer.from(createdSignature);
+
+    return crypto.timingSafeEqual(source, verifier);
+}
+
+const verifyGithub = (req, res, next) => {
+    const { headers, body } = req;
+    let valid = false;
+
+    const signature = headers['x-hub-signature'];
+
+    for (let sign of createSignatures(body)) {
+        if (validateSignature(signature, sign)) {
+            valid = true;
+            break;
+        }
+    }
+    console.log(valid);
+    if (!valid) {
+        return res.status(401).send("Mismatched Signatures");
+    }
+    next();
+}
+
 var client = new Twitter({
     consumer_key: process.env.CONSUMER_KEY,
     consumer_secret: process.env.CONSUMER_SECRET,
@@ -12,20 +48,12 @@ var client = new Twitter({
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.post("/git-twit", (req, res) => {
-    let secrets = process.env.GITHUB_HOOK_SECRETS.split(',');
-    let hmacs = [];
-    
-    for(let s of secrets){
-        let hmac = crypto.createHmac('sha1', s);
-        hmac.update(JSON.stringify(req.body));
-        console.log(`${req.headers['x-hub-signature']} == sha1=${hmac.digest('hex')}`);
-        hmacs.push(`sha1=${hmac.digest('hex')}`);
-    }
-    if(req.headers['x-hub-signature'] in hmacs) {
-        let push = req.body;
-    
-        let toTweet = 
+app.post("/git-twit", verifyGithub, (req, res) => {
+    let push = req.body;
+    console.log(req.headers);
+    console.log(req.body);
+
+    let toTweet =
         `***GIT ${req.headers['x-github-event'].toUpperCase()} NOTIFICATION***
         
         git >> ${push.head_commit.message}
@@ -37,18 +65,14 @@ app.post("/git-twit", (req, res) => {
         There are a total of ${push.commits.length} commits in this push.
         
         (This stat was published by pushwatcher)`;
-    
-        client.post('statuses/update', { status: toTweet })
-            .then(tweet => {
-                res.send(tweet);
-            })
-            .catch(error => {
-                throw error;
-            });
-    } else {
-        console.log("The github repo you're trying to use is not registered with this instance of pushwatcher and is unauthorized.");
-        res.send("The github repo you're trying to use is not registered with this instance of pushwatcher and is unauthorized.");
-    }
+
+    client.post('statuses/update', { status: toTweet })
+        .then(tweet => {
+            res.send(tweet);
+        })
+        .catch(error => {
+            throw error;
+        });
 });
 
 app.listen(port);
