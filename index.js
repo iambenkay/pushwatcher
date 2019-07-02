@@ -19,7 +19,8 @@ app.post("/git-twit", (req, res) => {
     for(let s of secrets){
         let hmac = crypto.createHmac('sha1', s);
         hmac.update(Buffer.from(JSON.stringify(req.body)));
-        hmacs.push(hmac.digest('hex'));
+        console.log(hmac.digest('hex'));
+        hmacs.push(`sha1=${hmac.digest('hex')}`);
     }
     if(req.headers['x-hub-signature'] in hmacs) {
         let push = req.body;
