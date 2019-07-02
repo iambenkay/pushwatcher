@@ -1,4 +1,4 @@
-const express = require('express'), bodyParser = require('body-parser'), Twitter = require('twitter');
+const express = require('express'), bodyParser = require('body-parser'), Twitter = require('twitter'), crypto = require('crypto');
 const port = process.env.PORT || 3000;
 const app = express();
 
@@ -13,17 +13,29 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.post("/git-twit", (req, res) => {
-    let push = req.body;
-
-    let toTweet = `***GIT ${req.headers['x-github-event'].toUpperCase()} NOTIFICATION***\n\ngit >> ${push.head_commit.message}\n\n\t\tLast commit by: ${push.head_commit.author.name}\n\t\t${push.head_commit.author.email}.\n\nThere are a total of ${push.commits.length} commits in this push.\n\n(This stat was published by pushwatcher)`;
-
-    client.post('statuses/update', { status: toTweet })
-        .then(tweet => {
-            res.send(tweet);
-        })
-        .catch(error => {
-            throw error;
-        });
+    let secrets = process.env.GITHUB_HOOK_SECRETS.split(',');
+    let hmacs = [];
+    
+    for(let s of secrets){
+        let hmac = crypto.createHmac('sha1', s);
+        hmac.update(Buffer.from(JSON.stringify(req.body)));
+        hmacs.push(hmac.digest('hex'));
+    }
+    if(req.headers['x-github-signature'] in hmacs) {
+        let push = req.body;
+    
+        let toTweet = `***GIT ${req.headers['x-github-event'].toUpperCase()} NOTIFICATION***\n\ngit >> ${push.head_commit.message}\nLink: ${push.url}\n\nLast commit by: ${push.head_commit.author.name}\n${push.head_commit.author.email}.\n\nThere are a total of ${push.commits.length} commits in this push.\n\n(This stat was published by pushwatcher)`;
+    
+        client.post('statuses/update', { status: toTweet })
+            .then(tweet => {
+                res.send(tweet);
+            })
+            .catch(error => {
+                throw error;
+            });
+    } else {
+        res.send("The github repo you're trying to use is not registered with this instance f pushwatcher is not trusted.");
+    }
 });
 
 app.listen(port);
