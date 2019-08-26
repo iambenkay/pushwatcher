@@ -2,43 +2,7 @@ const express = require('express'), bodyParser = require('body-parser'), Twitter
 const port = process.env.PORT || 3000;
 const app = express();
 
-const createSignatures = body => {
-    createdSignatures = [];
-    for (let secret of process.env.GITHUB_HOOK_SECRETS.split(',')) {
-        const hmac = crypto.createHmac('sha1', secret);
-        const signature = hmac.update(JSON.stringify(body)).digest('hex');
-        createdSignatures.push(`sha1=${signature}`);
-    }
-    return createdSignatures;
-}
-
-const validateSignature = (signature, createdSignature) => {
-    const source = Buffer.from(signature);
-    const verifier = Buffer.from(createdSignature);
-    console.log(source);
-    console.log(verifier);
-    return crypto.timingSafeEqual(source, verifier);
-}
-
-const verifyGithub = (req, res, next) => {
-    const { headers, body } = req;
-    let valid = false;
-
-    const signature = headers['x-hub-signature'];
-
-    for (let sign of createSignatures(body)) {
-        if (validateSignature(signature, sign)) {
-            valid = true;
-            break;
-        }
-    }
-    console.log(valid);
-    if (!valid) {
-        return res.status(401).send("Mismatched Signatures");
-    }
-    next();
-}
-
+// Iniitialize twitter client
 var client = new Twitter({
     consumer_key: process.env.CONSUMER_KEY,
     consumer_secret: process.env.CONSUMER_SECRET,
@@ -46,23 +10,26 @@ var client = new Twitter({
     access_token_secret: process.env.ACCESS_TOKEN_SECRET,
 })
 
+// initialize express middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.post("/git-twit", verifyGithub, (req, res) => {
-
+// create POST request handler for /git-twit
+app.post("/git-twit", (req, res) => {
+    console.log(req.body.payload);
+    console.log(req.headers);
+    let push = req.body;
     let toTweet =
-        `***GIT ${req.headers[''].toUpperCase()} NOTIFICATION***
+        `***GIT ${req.headers['x-github-event'].toUpperCase()} NOTIFICATION***
         
         git >> ${push.head_commit.message}
         Link: ${push.url}
         
-        Last commit by: ${push.head_commit.author.name}
-        ${push.head_commit.author.email}.
+        Last commit by: ${push.head_commit.author.name} (${push.head_commit.author.email}).
         
         There are a total of ${push.commits.length} commits in this push.
         
-        (This stat was published by pushwatcher)`;
+        (This stat was published by pushwatcher >> https://github.com/iambenkay/pushwatcher)`;
 
     client.post('statuses/update', { status: toTweet })
         .then(tweet => {

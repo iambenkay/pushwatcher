@@ -1,1 +1,3 @@
 # git-twit
+
+    npm install
