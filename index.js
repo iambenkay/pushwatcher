@@ -16,7 +16,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // create POST request handler for /git-twit
 app.post("/git-twit", (req, res) => {
-    console.log(req.body.payload);
+    console.log(JSON.parse(req.body.payload));
     console.log(req.headers);
     let push = req.body;
     let toTweet =
