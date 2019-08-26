@@ -23,7 +23,7 @@ app.post("/git-twit", (req, res) => {
 
     let push = JSON.parse(req.body.payload);
     let toTweet =
-        `GIT ${req.headers['x-github-event'].toUpperCase()}!!\ngit $ ${push.head_commit.message}\nLink: ${push.repository.url}\nLast commit by: ${push.head_commit.author.name}.\n(powered by pushwatcher)`;
+        `GIT ${req.headers['x-github-event'].toUpperCase()}!!\nmessage: ${push.head_commit.message}\nLink: ${push.repository.url}\nLast commit by: ${push.head_commit.author.name}.\n(powered by pushwatcher)`;
 
     client.post('statuses/update', { status: toTweet.substring(0, 140), })
         .then(tweet => {
