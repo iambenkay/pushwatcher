@@ -16,27 +16,20 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // create POST request handler for /git-twit
 app.post("/git-twit", (req, res) => {
-    console.log(JSON.parse(req.body.payload));
-    console.log(req.headers);
-    let push = req.body;
-    let toTweet =
-        `***GIT ${req.headers['x-github-event'].toUpperCase()} NOTIFICATION***
-        
-        git >> ${push.head_commit.message}
-        Link: ${push.url}
-        
-        Last commit by: ${push.head_commit.author.name} (${push.head_commit.author.email}).
-        
-        There are a total of ${push.commits.length} commits in this push.
-        
-        (This stat was published by pushwatcher >> https://github.com/iambenkay/pushwatcher)`;
+    const payload = JSON.parse(req.body.payload);
+    const owner = payload.repository.owner;
 
-    client.post('statuses/update', { status: toTweet })
+    if(owner.login !== "iambenkay" && owner.email !== "benjamin.node@gmail.com") return;
+
+    let push = JSON.parse(req.body.payload);
+    let toTweet =
+        `GIT ${req.headers['x-github-event'].toUpperCase()}!!\ngit $ ${push.head_commit.message}\nLink: ${push.repository.url}\nLast commit by: ${push.head_commit.author.name}.\n(powered by pushwatcher)`;
+
+    client.post('statuses/update', { status: toTweet.substring(0, 140), })
         .then(tweet => {
-            res.send(tweet);
         })
         .catch(error => {
-            throw error;
+            reject(error);
         });
 });
 
